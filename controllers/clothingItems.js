@@ -1,5 +1,5 @@
 const ClothingItem = require("../models/clothingItem");
-const { err400, err500 } = require("../utils/errors");
+const { err400, err404, err500 } = require("../utils/errors");
 
 const createItem = (req, res) => {
   console.log(req);
@@ -10,7 +10,7 @@ const createItem = (req, res) => {
   ClothingItem.create({ name, weather, imageUrl })
     .then((item) => {
       console.log(item);
-      res.send({ data: item }).catch;
+      res.send({ data: item });
     })
     .catch((err) => {
       console.error(err);
@@ -66,7 +66,47 @@ const deleteItem = (req, res) => {
     );
 };
 
-module.exports = { createItem, getItems, updateItem, deleteItem };
-module.exports.createClothingItem = (req, res) => {
-  console.log(req.user._id); // _id will become accessible
+const likeItem = (req, res) =>
+  ClothingItem.findByIdAndUpdate(
+    req.params.itemId,
+    { $addToSet: { likes: req.user._id } }, // add _id to the array if it's not there yet
+    { new: true }
+  )
+    .orFail()
+    .then((like) => res.status(200).send(like))
+    .catch((err) => {
+      if (err.name === "DocumentNotFoundError") {
+        res.status(err404.status).send({ message: err404.message });
+      } else if (err.name === "CastError") {
+        res.status(err400.status).send({ message: err400.message });
+      } else {
+        res.status(err500.status).send({ message: err500.message });
+      }
+    });
+
+const dislikeItem = (req, res) =>
+  ClothingItem.findByIdAndUpdate(
+    req.params.itemId,
+    { $pull: { likes: req.user._id } }, // remove _id from the array
+    { new: true }
+  )
+    .orFail()
+    .then((dislike) => res.status(200).send(dislike))
+    .catch((err) => {
+      if (err.name === "DocumentNotFoundError") {
+        res.status(err404.status).send({ message: err404.message });
+      } else if (err.name === "CastError") {
+        res.status(err400.status).send({ message: err400.message });
+      } else {
+        res.status(err500.status).send({ message: err500.message });
+      }
+    });
+
+module.exports = {
+  createItem,
+  getItems,
+  updateItem,
+  deleteItem,
+  likeItem,
+  dislikeItem,
 };

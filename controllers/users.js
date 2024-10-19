@@ -1,5 +1,5 @@
 const User = require("../models/user");
-const { err400, err403, err404, err500 } = require("../utils/errors");
+const { err400, err404, err500 } = require("../utils/errors");
 
 // GET / users
 
@@ -46,38 +46,3 @@ const getUser = (req, res) => {
 };
 
 module.exports = { getUsers, createUser, getUser };
-module.exports.likeItem = (req, res) =>
-  ClothingItem.findByIdAndUpdate(
-    req.params.itemId,
-    { $addToSet: { likes: req.user._id } },
-    { new: true }
-  )
-    .orFail()
-    .then((like) => res.status(200).send(like))
-    .catch((err) => {
-      if (err.name === "DocumentNotFoundError") {
-        res.status(err404.status).send({ message: err.message });
-      } else if (err.name === "CastError") {
-        res.status(err400.status).send({ message: err.message });
-      } else {
-        res.status(err500.status).send({ message: err.message });
-      }
-    });
-
-module.exports.dislikeItem = (req, res) =>
-  ClothingItem.findByIdAndUpdate(
-    req.params.itemId,
-    { $pull: { likes: req.user._id } },
-    { new: true }
-  )
-    .orFail()
-    .then((dislike) => res.status(200).send(dislike))
-    .catch((err) => {
-      if (err.name === "DocumentNotFoundError") {
-        res.status(err404.status).send({ message: err.message });
-      } else if (err.name === "CastError") {
-        res.status(err400.status).send({ message: err.message });
-      } else {
-        res.status(err500.status).send({ message: err.message });
-      }
-    });
